@@ -1,5 +1,5 @@
 
-const { Blog, Sequelize } = require("../../models");
+const { Blog, SecretKey, Sequelize } = require("../../models");
 
 module.exports = {
     findByPkOr404: pk => Blog.findByPkOr404(pk),
@@ -29,5 +29,11 @@ module.exports = {
         await blog.save();
         return blog;
     },
-    deleteBlog: async (pk) => await (await (await Blog.findByPkOr404(pk))).destroy()
+    deleteBlog: async (pk) => await (await (await Blog.findByPkOr404(pk))).destroy(),
+    generateSecret: async BlogId => {
+        const secretKey = await SecretKey.create({
+            BlogId
+        })
+        return secretKey.id
+    }
 }

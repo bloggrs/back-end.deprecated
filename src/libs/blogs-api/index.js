@@ -5,11 +5,13 @@ const app = module.exports = express();
 
 const { allowCrossDomain, validateRequest, jwtRequired, passUserFromJWT, adminRequired } = require("../../middlewares");
 
-const { findAll, createBlog, updateBlog, deleteBlog, findByPkOr404 } = require("./blogs-dal");
+const { findAll, createBlog, updateBlog, deleteBlog, findByPkOr404, generateSecret } = require("./blogs-dal");
 const { ErrorHandler } = require("../../utils/error");
 
 const yup = require("yup");
 const { param_id, id } = require("../utils/validations");
+const validateCredentials = require("./validateCredentials");
+const createBlogToken = require("../utils/createBlogToken");
 
 app.use(allowCrossDomain)
 
@@ -17,10 +19,54 @@ const BlogFields = {
     name: yup.string(),
     description: yup.string(),
     logo_url: yup.string(),
-    UserId: id,
     BlogCategoryId: id
 }
 const BlogFieldKeys = Object.keys(BlogFields)
+
+const getResponse = blog => ({
+    status: "success",
+    code: 200,
+    message: "Authorized",
+    data: {
+        token: createBlogToken(blog.id),
+        blog
+    }
+})
+app.post('/blogs/:blog_id/generate_secret', [
+    jwtRequired,
+    validateRequest(
+        yup.object().shape({
+            params: yup.object().shape({
+                blog_id: param_id.required()
+            })
+        })
+    )
+], async (req, res) => {
+    let secret = await generateSecret(req.params.blog_id)
+    return res.json({
+        code: 200,
+        message: "success",
+        data: { secret }
+    })
+});
+
+app.get('/blogs/auth', jwtRequired, async (req, res) => {
+    let user = await findUserByPk(req.auth.userId);
+    if (!user) throw new ErrorHandler(401, "Unauthorized")
+    return res.json(getResponse(user))
+});
+
+app.post('/blogs/auth', validateRequest(
+    yup.object().shape({
+        requestBody: yup.object().shape({
+            blog_id: id.required(),
+            secret: yup.string().uuid().required()
+        })
+    })
+), async (req, res) => {
+    let user = await validateCredentials(req.body)
+    return res.json(getResponse(user))
+});
 
 app.get("/blogs", [
     jwtRequired, passUserFromJWT,
@@ -60,12 +106,15 @@ app.get("/blogs/:blog_id", [
 const createBlogFields = {};
 BlogFieldKeys.map(key => createBlogFields[key] = BlogFields[key].required());
 app.post("/blogs",[
-    // jwtRequired, passUserFromJWT, adminRequired,
+    jwtRequired, passUserFromJWT,
     validateRequest(yup.object().shape({
         requestBody: yup.object().shape(createBlogFields)
     }))
 ], async (req,res) => {
-    let blog = await createBlog(req.body);
+    let blog = await createBlog({
+        ...req.body,
+        UserId: req.user.id
+    });
     return res.json({
         code: 200,
         message: "success",

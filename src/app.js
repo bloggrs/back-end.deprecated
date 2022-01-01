@@ -35,6 +35,7 @@ const postcomments_api = require('./libs/postcomments-api');
 const postlikes_api = require('./libs/postlikes-api');
 const referral_api = require('./libs/referral-api');
 const teammembers_api = require('./libs/teammembers-api');
+const secretkeys_api = require('./libs/secretkeys-api');
 
 const app = express();
 const server = http.createServer(app)
@@ -62,6 +63,7 @@ app.use(PATHNAME_PREFIX, postcomments_api)
 app.use(PATHNAME_PREFIX, postlikes_api)
 app.use(PATHNAME_PREFIX, referral_api)
 app.use(PATHNAME_PREFIX, teammembers_api)
+app.use(PATHNAME_PREFIX, secretkeys_api)
 
 app.get('/', (req, res) => res.json({ versions: [ "v1"] }))
 app.get("*", (req,res) => res.status(404).json({
