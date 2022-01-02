@@ -28,6 +28,7 @@ module.exports = (sequelize, DataTypes) => {
         if (!blog) throw new ErrorHandler.get404("Blog")
         return blog;
     }
+    Blog.findByPkOr404 = Blog.findByPkOrError
     Blog.associate = models => {
         Blog.belongsTo(models.User, { foreignKey: { allowNull: false } });
         Blog.belongsTo(models.BlogCategory, { foreignKey: { allowNull: false } })

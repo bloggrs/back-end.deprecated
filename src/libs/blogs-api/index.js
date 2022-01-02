@@ -19,6 +19,7 @@ const {
   findByPkOr404,
   generateSecret,
   getBlogCategories,
+  getBlogPages,
 } = require("./blogs-dal");
 const { ErrorHandler } = require("../../utils/error");
 
@@ -26,6 +27,7 @@ const yup = require("yup");
 const { param_id, id } = require("../utils/validations");
 const validateCredentials = require("./validateCredentials");
 const createBlogToken = require("../utils/createBlogToken");
+const { findPostsForBlog } = require("../posts-dal");
 
 app.use(allowCrossDomain);
 
@@ -96,6 +98,33 @@ app.get("/blogs/:blog_id/categories", async (req, res) => {
     code: 200,
     message: "success",
     data: { categories },
+  });
+});
+
+app.get("/blogs/:blog_id/pages", async (req, res) => {
+  const pages = await getBlogPages(req.params.blog_id);
+  return res.json({
+    code: 200,
+    message: "success",
+    data: { pages },
+  });
+});
+
+app.get("/blogs/:blog_id/posts",[
+    validateRequest(
+        yup.object().shape({
+            query: yup.object().shape({
+                page: yup.number().integer().positive().default(1),
+                pageSize: yup.number().integer().positive().default(10),      
+            })
+        })
+    )
+], async (req, res) => {
+  const posts = await findPostsForBlog(req.params.blog_id);
+  return res.json({
+    code: 200,
+    message: "success",
+    data: { posts },
   });
 });
 

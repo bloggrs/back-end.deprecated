@@ -17,10 +17,10 @@ module.exports = {
     },
     createPost: async ({ 
         title, slug, html_content, status,
-        BlogId, USerId
+        BlogId, UserId
      }) => await Post.create({ 
         title, slug, html_content, status,
-        BlogId, USerId
+        BlogId, UserId
       }),
     updatePost: async ({pk,data}) => {
         let keys = Object.keys(data);

@@ -14,19 +14,15 @@ const { param_id, id } = require("../utils/validations");
 app.use(allowCrossDomain)
 
 const PostFields = {
-    contract_type: yup.string().oneOf([
-        "SIGN_CONTRACT", "FACEBOOK_CONTRACT", "YOUTUBE_CONTRACT", "DIGITAL_PLATFORM_CONTRACTS"
-    ]),
-    start_date: yup.date(),
-    end_date: yup.date(),
-    comment: yup.string(),
-    file_url: yup.string(),
-    ClientId: id
+    title: yup.string(),
+    slug: yup.string(),
+    html_content: yup.string(),
+    // status: yup.string().default("")
 }
 const PostFieldKeys = Object.keys(PostFields)
 
 app.get("/posts", [
-    jwtRequired, passUserFromJWT,
+    // jwtRequired, passUserFromJWT,
     validateRequest(yup.object().shape({
         query: yup.object().shape({
             page: yup.number().integer().positive().default(1),
@@ -63,12 +59,16 @@ app.get("/posts/:post_id", [
 const CreatePostFields = {};
 PostFieldKeys.map(key => CreatePostFields[key] = PostFields[key].required());
 app.post("/posts",[
-    // jwtRequired, passUserFromJWT, adminRequired,
+    jwtRequired, passUserFromJWT,
     validateRequest(yup.object().shape({
         requestBody: yup.object().shape(CreatePostFields)
     }))
 ], async (req,res) => {
-    let post = await createPost(req.body);
+    let post = await createPost({
+        ...req.body,
+        UserId: req.user.id,
+        BlogId: 1
+    });
     return res.json({
         code: 200,
         message: "success",

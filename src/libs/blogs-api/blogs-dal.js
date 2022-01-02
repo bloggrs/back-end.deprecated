@@ -3,6 +3,7 @@ const {
   Post,
   PostCategory,
   SecretKey,
+  Page,
   Sequelize,
 } = require("../../models");
 const {
@@ -65,4 +66,10 @@ module.exports = {
     });
     return Promise.all(categories);
   },
+  getBlogPages: async (BlogId) => {
+      const pages = await Page.findAll({
+          where: { BlogId }
+      })
+      return pages;
+  }
 };
