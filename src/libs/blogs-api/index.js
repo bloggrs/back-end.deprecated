@@ -27,7 +27,7 @@ const yup = require("yup");
 const { param_id, id } = require("../utils/validations");
 const validateCredentials = require("./validateCredentials");
 const createBlogToken = require("../utils/createBlogToken");
-const { findPostsForBlog } = require("../posts-dal");
+const { findPostsForBlog, findPost } = require("../posts-dal");
 
 app.use(allowCrossDomain);
 
@@ -110,23 +110,53 @@ app.get("/blogs/:blog_id/pages", async (req, res) => {
   });
 });
 
-app.get("/blogs/:blog_id/posts",[
+app.get(
+  "/blogs/:blog_id/posts",
+  [
     validateRequest(
-        yup.object().shape({
-            query: yup.object().shape({
-                page: yup.number().integer().positive().default(1),
-                pageSize: yup.number().integer().positive().default(10),      
-            })
-        })
-    )
-], async (req, res) => {
-  const posts = await findPostsForBlog(req.params.blog_id);
-  return res.json({
-    code: 200,
-    message: "success",
-    data: { posts },
-  });
-});
+      yup.object().shape({
+        query: yup.object().shape({
+          page: yup.number().integer().positive().default(1),
+          pageSize: yup.number().integer().positive().default(10),
+        }),
+      })
+    ),
+  ],
+  async (req, res) => {
+    const posts = await findPostsForBlog(req.params.blog_id);
+    return res.json({
+      code: 200,
+      message: "success",
+      data: { posts },
+    });
+  }
+);
+
+app.get(
+  "/blogs/:blog_id/posts/:post_id",
+  [
+    validateRequest(
+      yup.object().shape({
+        params: yup.object().shape({
+          blog_id: param_id.required(),
+          post_id: param_id.required(),
+        }),
+        query: yup.object().shape({
+          page: yup.number().integer().positive().default(1),
+          pageSize: yup.number().integer().positive().default(10),
+        }),
+      })
+    ),
+  ],
+  async (req, res) => {
+    const post = await findPost(req.params.post_id);
+    return res.json({
+      code: 200,
+      message: "success",
+      data: { post },
+    });
+  }
+);
 
 app.get(
   "/blogs",
